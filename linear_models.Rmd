@@ -1,0 +1,111 @@
+---
+title: "linear models"
+output: github_document
+---
+
+
+
+```{r}
+library(tidyverse)
+library(p8105.datasets)
+
+set.seed(1)
+```
+
+## Load and clean the Airbnb data
+
+```{r}
+data("nyc_airbnb")
+
+nyc_airbnb =
+  nyc_airbnb |>
+  mutate(stars = review_scores_location / 2) |>
+  select(
+    price, stars, borough = neighbourhood_group,
+    neighbourhood, room_type
+    ) |>
+  filter(borough != "Staten Island")
+```
+
+
+Let's fit a model!!
+
+```{r}
+fit = 
+  nyc_airbnb |>
+  lm(price ~ stars + borough, data = _)
+```
+
+Let's look at the `fit`
+
+```{r}
+summary(fit)
+summary(fit)$coef
+coef(fit)
+#fitted.values(fit)
+```
+
+tidy up the output instead
+
+```{r}
+fit |>
+  broom::glance()
+```
+
+tidy up the coefficients
+
+```{r}
+fit |>
+  broom::tidy() |>
+  mutate(term = str_replace(term, "^borough", "Borough: ")) |>
+  select(term, estimate, p.value) |>
+  knitr::kable(digits = 3)
+```
+
+
+
+```{r}
+fit = 
+  nyc_airbnb |>
+  mutate(
+    borough = fct_infreq(borough),
+    room_type = fct_infreq(room_type)
+  ) |>
+  lm(price ~ stars + borough + room_type, data = _)
+
+fit |>
+  broom::tidy()
+```
+
+
+## Quick look at diagnostics
+
+```{r}
+nyc_airbnb |>
+  modelr::add_residuals(fit) |> 
+  ggplot(aes(x = resid)) +
+  geom_density() +
+  xlim(-100, 500)
+
+nyc_airbnb |>
+  modelr::add_residuals(fit) |> 
+  ggplot(aes(x = stars, y = resid)) +
+  geom_point()
+```
+
+
+## Hypothesis test for categorical predictor
+
+fit a "null" and "alternative" model
+
+```{r}
+fit_null = lm(price ~ stars + borough, data = nyc_airbnb)
+fit_alternative = lm(price ~ stars + borough + room_type, data = nyc_airbnb)
+
+anova(fit_null, fit_alternative) |>
+  broom::tidy()
+```
+
+
+## Borough=level differences
+
