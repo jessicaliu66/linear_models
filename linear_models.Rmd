@@ -107,5 +107,59 @@ anova(fit_null, fit_alternative) |>
 ```
 
 
-## Borough=level differences
+## Borough-level differences
 
+```{r}
+fit = 
+  nyc_airbnb |>
+  lm(price ~ stars * borough + room_type * borough, data = _)
+
+fit |>
+  broom::tidy()
+```
+
+
+
+```{r}
+airbnb_lm = function(df) {
+  lm(price ~ stars + room_type, data = df)
+}
+
+nyc_airbnb |>
+  nest(df = -borough) |> # nest everything except borough
+  mutate(
+    models = map(df, airbnb_lm),
+    results = map(models, broom::tidy)
+  ) |>
+  select(borough, results) |>
+  unnest(results) |>
+  select(borough, term, estimate) |>
+  pivot_wider(
+    names_from = term, 
+    values_from = estimate
+  ) |>
+  knitr::kable(digits = 2)
+  
+```
+
+same thing but just a little different
+
+```{r}
+
+nyc_airbnb |>
+  nest(df = -borough) |> # nest everything except borough (nest within borough)
+  mutate(
+    # using anonymous function instead of creating one
+    models = map(df, \(df) lm(price ~ stars + room_type, data = df)), 
+    results = map(models, broom::tidy)
+  ) |>
+  select(borough, results) |>
+  unnest(results) |>
+  select(borough, term, estimate) |>
+  pivot_wider(
+    names_from = term, 
+    values_from = estimate
+  ) |>
+  knitr::kable(digits = 2)
+  
+```
