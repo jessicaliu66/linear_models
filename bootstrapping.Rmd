@@ -1,0 +1,79 @@
+---
+title: "bootstrapping"
+output: github_document
+---
+
+
+
+```{r}
+library(tidyverse)
+library(p8105.datasets)
+library(modelr)
+
+set.seed(1)
+```
+
+
+## Generate a relevant example
+
+
+```{r}
+n_samp = 250
+
+sim_df_const = 
+  tibble(
+    x = rnorm(n_samp, 1, 1),
+    error = rnorm(n_samp, 0, 1),
+     y = 2 + 3 * x + error
+  )
+
+sim_df_nonconst = sim_df_const |>
+  mutate(
+    error = error * 0.75 * x,
+    y = 2 + 3 * x + error
+  )
+
+sim_df_nonconst |>
+  ggplot(aes(x = x, y = y)) + geom_point()
+```
+
+
+fit some linear models
+
+```{r}
+sim_df_const |>
+  lm(y ~ x, data = _) |>
+  broom::tidy()
+
+sim_df_nonconst |>
+  lm(y ~ x, data = _) |>
+  broom::tidy()
+```
+
+
+## Draw and analyze a bootstrap sample
+
+Start with a little function
+
+```{r}
+boot_sample = function(df) {
+  
+  sample_frac(df, replace = TRUE) 
+  # draw a sample with 100% size, with replacement each time
+  
+}
+```
+
+Let's see how this works
+
+```{r}
+sim_df_nonconst |>
+  boot_sample() |>
+  ggplot(aes(x = x, y = y)) +
+  geom_point(alpha = .5) +
+  stat_smooth(method = "lm")
+```
+
+
+
+

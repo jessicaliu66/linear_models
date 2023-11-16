@@ -2,3 +2,5 @@
 .Rhistory
 .RData
 .Ruserdata
+
+data_raw/ # ignore the data_raw directory (have to do it before creating file and committing)
